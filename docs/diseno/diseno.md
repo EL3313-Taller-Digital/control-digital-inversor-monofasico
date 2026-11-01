@@ -68,11 +68,11 @@ Las interfaces externas corresponden a las señales que ingresan o salen física
 
 Las señales internas permiten la comunicación y sincronización entre los módulos que conforman la arquitectura digital.
 
-| Señal | Origen | Destino | Función |
-|---|---|---|---|
-| `AXI4-Lite` | MicroBlaze V | Interconexión AXI y periféricos | Comunicación y configuración de los periféricos |
-| `interrupt` | AXI Timer | MicroBlaze V | Notificación de interrupciones periódicas |
-| `pwm_trigger_o` | PWM | XADC | Sincronización de la adquisición de corriente |
+| Interfaz o señal | Módulos relacionados | Función |
+|---|---|---|
+| `AXI4-Lite` | MicroBlaze V e interconexión AXI con los periféricos | Comunicación y acceso a los registros de los periféricos |
+| `interrupt` | AXI Timer → MicroBlaze V | Notificación de interrupciones periódicas |
+| `pwm_trigger_o` | PWM → XADC | Sincronización de la adquisición de corriente |
 
 La interconexión AXI4-Lite permite que MicroBlaze V acceda a los registros de los periféricos para realizar su configuración y controlar su funcionamiento.
 
