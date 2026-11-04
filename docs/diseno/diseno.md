@@ -269,6 +269,182 @@ La posición del evento de muestreo deberá seleccionarse de acuerdo con las car
 
 ---
 
+### Exportación de muestras por UART
+
+<img width="952" height="214" alt="image" src="https://github.com/user-attachments/assets/b73a71fe-69e3-4939-ad48-a1c6d9f5a567" />
+
+*Figura 5. Diagrama de tercer nivel de exportación de muestras por UART.*
+
+#### Descripción del tercer nivel
+
+Este diagrama presenta la solicitud de exportación, la lectura del histórico de corriente y su transmisión hacia la computadora mediante UART.
+
+El botón físico entrega su estado al GPIO. El programa detecta una pulsación válida y genera una solicitud de exportación. La detección del evento debe incluir antirrebote para evitar solicitudes repetidas por una misma pulsación.
+
+El buffer circular conserva las muestras registradas durante la ejecución del control. Los punteros identifican la posición de escritura y permiten recuperar el histórico en orden cronológico. Al aceptar una exportación, se conserva el segmento seleccionado para evitar que sus datos cambien durante la transmisión.
+
+El formateo organiza las muestras según el formato de comunicación acordado. El driver UART en C entrega los bytes al periférico AXI UART Lite mediante AXI4-Lite. Finalmente, UART Lite genera la señal TX hacia la computadora.
+
+La transmisión se realiza fuera de la rutina periódica del controlador y permite que esta continúe ejecutándose.
+
+#### Componentes y funciones
+
+| Componente | Función |
+|---|---|
+| Botón físico | Permitir al usuario solicitar una exportación. |
+| GPIO | Proporcionar al software el estado del botón. |
+| Detección de evento | Identificar una pulsación válida mediante antirrebote y detección de cambio. |
+| Solicitud de exportación | Coordinar la conservación y el envío del histórico. |
+| Buffer circular | Almacenar las muestras recientes de corriente. |
+| Punteros | Identificar las posiciones y la cantidad de muestras disponibles. |
+| Lectura del histórico | Recuperar las muestras seleccionadas en orden cronológico. |
+| Formateo de muestras | Organizar los datos para su transmisión e interpretación en la PC. |
+| Driver UART en C | Administrar el envío por pasos sin impedir la ejecución del control periódico. |
+| Interconexión AXI4-Lite | Comunicar el procesador con los registros del periférico UART. |
+| AXI UART Lite | Convertir los bytes del software en una transmisión serial. |
+
+#### Entradas y salidas
+
+| Señal o interfaz | Tipo | Función |
+|---|---|---|
+| Reloj de 100 MHz | Entrada de reloj | Sincronizar el hardware de la plataforma. |
+| Reset | Entrada de control | Inicializar los periféricos y el estado del sistema. |
+| `btn_export` | Entrada del usuario | Solicitar la exportación del histórico. |
+| Muestras de corriente | Entrada de datos | Alimentar el buffer desde la rutina de control. |
+| Solicitud de exportación | Control interno | Iniciar la preparación de una captura. |
+| Histórico y punteros | Datos internos | Identificar las muestras que deben transmitirse y su orden. |
+| Muestras formateadas | Datos internos | Entregar al driver los bytes preparados para el envío. |
+| AXI4-Lite | Entrada / salida | Transportar accesos a los registros de UART Lite. |
+| TX hacia PC | Salida serial | Enviar el histórico a la computadora. |
+
+#### Funcionamiento conjunto
+
+Durante la operación, la rutina de control registra muestras en el buffer circular. Una pulsación válida solicita conservar el histórico y preparar su exportación.
+
+El software utiliza los punteros para recorrer las muestras en orden cronológico, las formatea y las transmite por UART. Durante el envío, la captura seleccionada permanece estable y el control periódico continúa atendiendo la medición y la actualización del PWM.
+
+
+### Adquisición de corriente mediante XADC
+
+<img width="954" height="290" alt="image" src="https://github.com/user-attachments/assets/e5e7bede-c7d5-435f-9fce-37b0e621b776" />
+
+*Figura 6. Diagrama de tercer nivel de adquisición de corriente mediante XADC.*
+
+#### Descripción del tercer nivel
+
+Este diagrama presenta el recorrido de la medición desde el sensor de corriente hasta el programa ejecutado en MicroBlaze V.
+
+El sensor genera una señal analógica representativa de la corriente de la carga. El acondicionamiento adapta su amplitud y desplazamiento al intervalo admitido por el XADC.
+
+El PWM proporciona `pwm_trigger_o` para coordinar el instante de adquisición con la conmutación. El bloque de sincronización recibe este disparo y entrega la solicitud al control de conversión.
+
+El control administra el inicio de la captura mediante `start_conversion` y supervisa la disponibilidad del convertidor. Cuando el XADC entrega un resultado válido, la muestra se almacena en el registro de datos y se actualiza el registro de estado.
+
+MicroBlaze V consulta los registros mediante AXI4-Lite. La aplicación en C obtiene la muestra y utiliza la calibración de la cadena de medida para interpretarla como corriente.
+
+#### Componentes y funciones
+
+| Componente | Función |
+|---|---|
+| Sensor de corriente | Generar una señal analógica representativa de la corriente de la carga. |
+| Acondicionamiento | Adaptar la señal del sensor a la entrada del XADC. |
+| PWM | Proporcionar el disparo que establece el instante de adquisición. |
+| Sincronización del disparo | Entregar una solicitud de captura compatible con el reloj de adquisición. |
+| Control de conversión | Administrar la captura y la actualización de los registros. |
+| XADC | Convertir la tensión acondicionada en una muestra digital de 12 bits. |
+| Registro de datos | Conservar el resultado para su lectura desde el procesador. |
+| Registro de estado | Informar la disponibilidad de la muestra y la ocupación de la adquisición. |
+| Interfaz AXI4-Lite | Permitir el acceso del procesador a los registros. |
+| MicroBlaze V y lectura en C | Recuperar la medición e incorporarla al programa de control. |
+
+#### Entradas y salidas
+
+| Señal o interfaz | Tipo | Función |
+|---|---|---|
+| Reloj de 100 MHz | Entrada de reloj | Sincronizar la lógica digital de adquisición. |
+| Reset | Entrada de control | Inicializar el control y los registros. |
+| Corriente de la carga | Entrada física | Magnitud que debe medirse. |
+| `I_sens` | Señal analógica interna | Entregar la medición del sensor al acondicionamiento. |
+| Tensión acondicionada | Señal analógica | Proporcionar al XADC una entrada compatible con su intervalo de operación. |
+| `pwm_trigger_o` | Entrada de control | Solicitar una captura coordinada con el PWM. |
+| `start_conversion` | Control interno | Iniciar la conversión. |
+| Muestra digital | Datos internos | Transferir el resultado del XADC al registro de datos. |
+| `data_ready` | Estado de salida | Indicar que existe una muestra disponible para lectura. |
+| `busy` | Estado interno y de salida | Indicar que la adquisición está ocupada. |
+| AXI4-Lite | Entrada / salida | Transportar solicitudes de acceso, datos y respuestas entre adquisición y procesador. |
+
+#### Funcionamiento conjunto
+
+El sensor y el acondicionamiento proporcionan la señal analógica que representa la corriente de la carga. El disparo del PWM solicita una adquisición y el control inicia la conversión cuando puede atenderla.
+
+Al finalizar, la lógica guarda la muestra y actualiza los indicadores de estado. El programa consulta `data_ready`, lee el resultado y realiza el reconocimiento previsto por la interfaz.
+
+La fase de adquisición debe coordinarse con la ejecución del controlador para que el software disponga de la muestra correspondiente a cada actualización del control.
+
+
+### Software de control de corriente y actualización del PWM
+
+<img width="950" height="433" alt="image" src="https://github.com/user-attachments/assets/147df1af-9934-4ddd-b7ee-8212b0427c7b" />
+
+
+*Figura 7. Diagrama de tercer nivel del software de control de corriente y actualización del PWM.*
+
+#### Descripción del tercer nivel
+
+Este diagrama presenta la inicialización de la aplicación, la rutina periódica del controlador y el almacenamiento de las mediciones.
+
+Durante la inicialización, el programa configura PWM, XADC, UART, GPIO y AXI Timer. También establece los parámetros iniciales, los estados del controlador y los índices del buffer circular.
+
+La interrupción periódica del Timer solicita la ejecución de la rutina de control. El programa verifica `data_ready` y obtiene una muestra válida de corriente desde la interfaz de adquisición.
+
+La referencia sinusoidal `i_ref` se compara con la corriente medida `i_meas`. La diferencia forma el error `e = i_ref − i_meas`, utilizado por el controlador proporcional-resonante discreto para calcular la acción de control.
+
+El resultado pasa por una etapa de saturación y limitación antes de convertirse al formato de `duty_ref` y escribirse en el registro del PWM. La muestra de corriente también se guarda en el buffer circular y se actualiza su índice cuando el registro del histórico está habilitado.
+
+La aplicación se desarrolla en C y se ejecuta sobre MicroBlaze V. Vitis se utiliza para construir y depurar el programa.
+
+#### Componentes y funciones
+
+| Componente | Función |
+|---|---|
+| Configuración de periféricos | Preparar PWM, XADC, UART, GPIO y Timer para la operación. |
+| Parámetros iniciales | Establecer referencia, coeficientes, estados del controlador e índices del histórico. |
+| Atención de interrupción | Ejecutar la rutina periódica y reconocer la solicitud del Timer. |
+| Verificación de `data_ready` | Comprobar la disponibilidad de una muestra válida. |
+| Lectura de corriente | Obtener e interpretar la medición del subsistema de adquisición. |
+| Generador de referencia sinusoidal | Producir el valor de corriente deseado para el instante actual. |
+| Cálculo del error | Obtener la diferencia entre referencia y medición. |
+| Controlador PR discreto | Calcular la acción de control a partir del error y sus estados internos. |
+| Saturación y limitación | Mantener la acción de control dentro de los límites definidos. |
+| Escritura de `duty_ref` | Entregar la nueva referencia al periférico PWM. |
+| Almacenamiento e índice | Registrar la corriente y actualizar la posición del buffer circular. |
+| MicroBlaze V | Ejecutar la aplicación y realizar los accesos a los periféricos. |
+
+#### Entradas y salidas
+
+| Señal o interfaz | Tipo | Función |
+|---|---|---|
+| Reloj de 100 MHz | Entrada de la plataforma | Proporcionar la referencia temporal del procesador y los periféricos. |
+| Reset | Entrada de control | Reiniciar la plataforma y provocar una nueva inicialización del programa. |
+| `intr_timer` | Entrada de interrupción | Solicitar la ejecución periódica del controlador mediante la infraestructura de interrupciones. |
+| `data_ready` | Entrada de estado | Informar que existe una muestra disponible. |
+| Muestra de corriente | Entrada de datos | Proporcionar la medición utilizada por el controlador. |
+| Parámetros del control | Datos de configuración | Definir amplitud de referencia, coeficientes y límites de operación. |
+| `i_ref` | Dato interno | Representar la corriente deseada en el instante actual. |
+| `e` | Dato interno | Representar la diferencia entre referencia y corriente medida. |
+| `duty_ref` | Salida de control | Actualizar la referencia de modulación del PWM. |
+| Muestra e índice del buffer | Salida de almacenamiento | Mantener el histórico disponible para su exportación. |
+
+#### Funcionamiento conjunto
+
+El programa inicializa los periféricos y espera las interrupciones periódicas del Timer. En cada ejecución prevista, comprueba la disponibilidad de la medición, obtiene la corriente y genera la referencia sinusoidal.
+
+El error alimenta al controlador PR. Su salida se limita y se escribe en el PWM para actualizar la actuación sobre la etapa de potencia. La corriente medida se registra en el buffer cuando el almacenamiento está habilitado.
+
+La rutina debe finalizar dentro del período de control, propuesto en 100 µs. La adquisición debe proporcionar una muestra válida antes de su lectura y la exportación UART debe permitir que las interrupciones continúen atendiéndose.
+
+Los tres diagramas se relacionan mediante este recorrido: adquisición entrega la medición, el software calcula y actualiza el PWM, y el buffer conserva las muestras para enviarlas posteriormente a la computadora.
+
 ## 3. Funcionamiento general del sistema
 
 El funcionamiento comienza con la inicialización de MicroBlaze V y la configuración de los periféricos conectados mediante AXI4-Lite.
@@ -288,6 +464,7 @@ Cuando el usuario activa `btn_export`, el procesador solicita la transmisión de
 La transmisión deberá realizarse sin interrumpir la ejecución periódica del controlador.
 
 ---
+
 
 ## 4. Consideraciones de implementación
 
