@@ -50,7 +50,7 @@ El programa contempla diferentes modos para facilitar las pruebas y la integraci
 
 **Prueba digital del regulador PR:** permite ejecutar el controlador utilizando referencias generadas por software, sin depender de la adquisición física de corriente. Se utiliza para verificar el cálculo del regulador y la comunicación con los registros PWM.
 
-**Calibración y adquisición XADC:** contempla la lectura del canal VAUX6 y el procesamiento de la señal correspondiente al sensor de corriente ACS712.
+**Calibración y adquisición XADC:** contempla la lectura del canal VAUX6 y el procesamiento de la señal correspondiente al sensor de corriente ACS712 de 20 A.
 
 **Control integrado:** contempla la adquisición de corriente, el cálculo del error, la ejecución del regulador PR y la actualización del PWM. La validación integral de este modo continúa pendiente.
 
@@ -95,7 +95,7 @@ La adquisición se realiza a través del canal auxiliar VAUX6, configurado en Vi
 
 ### Sensor de corriente ACS712
 
-El sensor seleccionado es el ACS712 de 5 A, cuya salida analógica depende de la corriente que circula por el conductor.
+El sensor seleccionado es el **ACS712 de 20 A**, cuya salida analógica depende de la corriente que circula por el conductor.
 
 Debido a los límites de entrada del XADC, la señal del sensor requiere acondicionamiento y reducción de tensión antes de conectarse a la FPGA.
 
@@ -127,7 +127,7 @@ La activación de la exportación desde un botón físico de la Basys 3 y su fun
 |---|---|
 | XADC VAUX6 | Configurado e integrado en el diseño |
 | Lectura de corriente en C | Implementada; requiere validación integral |
-| ACS712 de 5 A | Acondicionamiento y calibración en desarrollo |
+| ACS712 de 20 A | Acondicionamiento y calibración en desarrollo |
 | UART a 115200 baudios | Comunicación probada |
 | Buffer de muestras | Implementado en software |
 | Exportación CSV | Implementada; pendiente de validación completa |
