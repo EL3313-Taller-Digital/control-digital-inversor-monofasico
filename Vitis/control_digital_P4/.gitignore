@@ -1,0 +1,16 @@
+
+# Archivos generados por Vitis
+build/
+_ide/
+.cache/
+.compile_commands/
+compile_commands.json
+
+# Archivos del editor
+.clangd
+.vscode/
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
