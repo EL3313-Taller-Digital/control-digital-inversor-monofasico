@@ -1,35 +1,55 @@
-# Simulaciones del sistema digital
 
-Esta carpeta contiene los archivos utilizados para verificar el funcionamiento de los módulos digitales del proyecto antes de su implementación física en la FPGA Basys 3.
+# Simulaciones del Proyecto 4
 
-Las simulaciones se realizan mediante XSim, utilizando Vivado 2026.1.
+Esta carpeta contiene las pruebas de simulación utilizadas para verificar el funcionamiento de los módulos digitales del sistema de control de corriente para un inversor monofásico.
 
-## PWM unipolar
+## Herramientas utilizadas
 
-Se desarrolló un testbench para verificar el funcionamiento del generador PWM unipolar.
+- Vivado 2026.1
+- SystemVerilog
+- Vivado Simulator (XSim)
 
-Las pruebas incluyen:
+## Simulación del PWM unipolar
 
-- Generación de señales PWM complementarias.
-- Configuración de diferentes períodos de conmutación.
-- Verificación de la habilitación y deshabilitación de las salidas.
-- Comprobación del funcionamiento del generador de señales.
+Archivo: `Simulaciones/tb_pwm_unipolar.sv`
 
-El tiempo muerto requerido para el sistema es de 500 ns, equivalente a 50 ciclos de reloj de 100 MHz.
+Este banco de pruebas permite verificar el funcionamiento del módulo PWM unipolar, incluyendo:
 
-## Interfaz AXI4-Lite
+- Generación de señales PWM.
+- Funcionamiento de las salidas complementarias.
+- Comportamiento ante diferentes configuraciones de frecuencia.
+- Activación y desactivación del módulo.
+- Funcionamiento de la lógica de tiempo muerto.
 
-Se realizaron pruebas del módulo PWM con interfaz AXI4-Lite para verificar la comunicación mediante registros.
+El módulo RTL correspondiente se encuentra en `Vivado/Proyecto4_Control_Digital/rtl/pwm_unipolar.sv`.
 
-Las pruebas incluyen:
+## Simulación del periférico PWM AXI4-Lite
 
-- Escritura y lectura de registros.
-- Configuración del generador PWM.
-- Verificación del trigger periódico.
-- Deshabilitación segura de las salidas.
+Archivo: `Vivado/pwm_axi_1_0/sim/tb_pwm_axi.sv`
 
-## Estado de las simulaciones
+Este banco de pruebas permite verificar la interfaz de comunicación AXI4-Lite y su interacción con el generador PWM.
 
-Las pruebas realizadas del generador PWM y de la interfaz AXI4-Lite finalizaron satisfactoriamente.
+Se consideran las siguientes verificaciones:
 
-La verificación del sistema completo con adquisición XADC, regulador PR y realimentación de corriente se documentará una vez completadas las pruebas correspondientes.
+- Escritura y lectura de registros AXI4-Lite.
+- Configuración de los parámetros del PWM.
+- Habilitación y deshabilitación de las salidas.
+- Generación de la señal de sincronización.
+- Configuración del tiempo muerto.
+
+El tiempo muerto establecido es de 500 ns, equivalente a 50 ciclos del reloj de 100 MHz.
+
+## Ejecución de las simulaciones
+
+1. Abrir el proyecto correspondiente en Vivado 2026.1.
+2. Agregar el testbench que se desea ejecutar.
+3. Configurar el testbench como Simulation Top.
+4. Ejecutar Run Behavioral Simulation.
+5. Revisar las formas de onda y los mensajes de la consola.
+6. Comparar los resultados con el comportamiento esperado.
+
+## Alcance de las pruebas
+
+Las simulaciones permiten comprobar el comportamiento digital del PWM y de su interfaz AXI4-Lite.
+
+Estas pruebas no sustituyen las mediciones físicas del inversor ni la validación del sistema de control con realimentación de corriente.
