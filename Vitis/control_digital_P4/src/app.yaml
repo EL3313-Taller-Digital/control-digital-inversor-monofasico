@@ -1,0 +1,4 @@
+domain_path: C:/Vivado_Projects/Proyecto4_Vitis/Proyecto4_Vitis/platforma_P4/export/platforma_P4/sw/standalone_microblaze_riscv_0
+app_src_dir: C:\AMDDesignTools\2026.1\Vitis\data\embeddedsw\lib\sw_apps\empty_application
+template: empty_application
+lang: c
