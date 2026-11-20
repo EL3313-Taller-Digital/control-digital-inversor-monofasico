@@ -86,3 +86,51 @@ La prueba no demuestra todavía la estabilidad del lazo cerrado ni el cumplimien
 ### Verificaciones pendientes
 
 Se mantienen pendientes la validación completa de la adquisición XADC, la temporización de la ejecución periódica, la interacción física con el usuario y las pruebas del control de corriente utilizando la etapa de potencia.
+
+## Adquisición de corriente mediante XADC
+
+El sistema utiliza el módulo XADC de la FPGA Basys 3 para adquirir la señal analógica correspondiente a la corriente medida.
+
+La adquisición se realiza a través del canal auxiliar VAUX6, configurado en Vivado mediante XADC Wizard. El procesador MicroBlaze V utiliza los datos adquiridos para calcular la corriente y posteriormente el error respecto a la referencia.
+
+### Sensor de corriente ACS712
+
+El sensor seleccionado es el ACS712 de 5 A, cuya salida analógica depende de la corriente que circula por el conductor.
+
+Debido a los límites de entrada del XADC, la señal del sensor requiere acondicionamiento y reducción de tensión antes de conectarse a la FPGA.
+
+El software contempla una etapa de calibración del nivel correspondiente a corriente cero y la conversión de las muestras digitales a una representación numérica utilizada por el controlador.
+
+La calibración física definitiva del sensor y la validación de la precisión de las mediciones continúan pendientes.
+
+## Comunicación UART
+
+La interfaz UART permite intercambiar información entre el sistema MicroBlaze V y una computadora.
+
+Se utiliza para transmitir mensajes de diagnóstico, resultados de pruebas y datos relacionados con el funcionamiento del controlador.
+
+La comunicación serie está configurada a 115200 baudios.
+
+### Almacenamiento y exportación de muestras
+
+La aplicación contempla un buffer de memoria para almacenar muestras durante la ejecución.
+
+El objetivo es permitir el registro de la corriente medida y su posterior exportación mediante UART para analizar los datos desde una computadora.
+
+El programa incorpora funciones para la transmisión de los datos en formato CSV.
+
+La activación de la exportación desde un botón físico de la Basys 3 y su funcionamiento durante el control periódico todavía requieren validación.
+
+## Estado de validación de periféricos
+
+| Elemento | Estado |
+|---|---|
+| XADC VAUX6 | Configurado e integrado en el diseño |
+| Lectura de corriente en C | Implementada; requiere validación integral |
+| ACS712 de 5 A | Acondicionamiento y calibración en desarrollo |
+| UART a 115200 baudios | Comunicación probada |
+| Buffer de muestras | Implementado en software |
+| Exportación CSV | Implementada; pendiente de validación completa |
+| Activación mediante botón físico | Pendiente de verificación |
+
+Las pruebas digitales realizadas hasta el momento no sustituyen la calibración del sensor ni la comprobación de las mediciones con la etapa de potencia.
