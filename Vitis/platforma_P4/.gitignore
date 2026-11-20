@@ -1,0 +1,19 @@
+
+# Archivos generados por Vitis
+export/
+logs/
+.Xil/
+.cache/
+build/
+_ide/
+
+# Archivos generados del BSP
+microblaze_riscv_0/**/build/
+microblaze_riscv_0/**/lib/
+microblaze_riscv_0/**/include/
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
+compile_commands.json
