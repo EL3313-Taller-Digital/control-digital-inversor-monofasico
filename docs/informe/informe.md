@@ -1,5 +1,7 @@
-## Proyecto 4 — Control de corriente en un inversor monofásicomediante un regulador PR discreto sobre MicroBlaze V
-## Informe 
+
+## Proyecto 4 — Control de corriente en un inversor monofásico mediante un regulador PR discreto sobre MicroBlaze V
+
+## Informe
 
 **Institución:** Instituto Tecnológico de Costa Rica  
 **Escuela:** Ingeniería Electrónica  
@@ -19,6 +21,7 @@
 - Dr.-Ing. Jeferson González-Gómez
 
 ---
+
 ## 1. Introducción
 
 El control de corriente de un inversor necesita adquirir mediciones, procesarlas y actualizar señales de conmutación de forma periódica. Para desarrollar estas tareas se utilizó una FPGA Basys 3 con un procesador MicroBlaze V, periféricos implementados en hardware y una aplicación en C.
@@ -131,7 +134,14 @@ El reloj de referencia utilizado es de **100 MHz**. Las cuatro señales del PWM 
 | `pwm_b_high` | JA3 | J2 |
 | `pwm_b_low` | JA4 | G2 |
 
-**Figura pendiente:** incorporar una captura legible del Block Design integrado de Vivado. Deben identificarse MicroBlaze V, el PWM, XADC, AXI Timer, UART e interrupciones.
+![Figura 1. Arquitectura completa del sistema digital en Vivado](../diseno/imagenes/fig01_block_design.png)
+
+*Figura 1. Block Design completo del sistema digital, con MicroBlaze V, interconexión AXI, UART, GPIO, temporizador, PWM y XADC.*
+
+
+![Figura 2. Detalle de los periféricos de control](../diseno/imagenes/fig01_perifericos_control.png)
+
+*Figura 2. Detalle del Block Design donde se observan el periférico PWM AXI4-Lite, AXI Timer y XADC.*
 
 ### 4.2 Generador PWM personalizado
 
@@ -221,27 +231,52 @@ En la versión documentada de las pruebas de Anthony se registraron mensajes **P
 
 Estos resultados corresponden a pruebas digitales del módulo. La simulación **postimplementación temporizada con anotación SDF** y la cobertura final de casos límite deben documentarse por separado; no se consideran demostradas solo por haber ejecutado el testbench funcional.
 
-**Figura pendiente:** forma de onda que muestre las cuatro salidas PWM y una transición ampliada para medir los 500 ns de tiempo muerto.
+![Figura 3. Señales de salida del PWM unipolar](../diseno/imagenes/fig02_pwm_senales.png)
+
+*Figura 3. Simulación funcional de las cuatro salidas PWM con frecuencias seleccionables de 5, 10 y 20 kHz.*
+
+![Figura 4. Medición del tiempo muerto de 500 ns](../diseno/imagenes/fig03_tiempo_muerto.png)
+
+*Figura 4. Verificación del tiempo muerto de 500 ns entre las señales complementarias del PWM.*
 
 ### 5.2 Síntesis, implementación y temporización
 
 El proyecto pasó por las etapas de síntesis e implementación en Vivado y se obtuvo un bitstream de la versión documentada. Esto permitió programar la Basys 3 y continuar las pruebas del procesador y los periféricos.
 
-![Generación de bitstream completada en Vivado](images/02_Bitstream_PWM_500ns_completado.png)
+Para evaluar los recursos y la temporización del diseño se revisaron los reportes de Vivado correspondientes a `sistema_control_digital_wrapper`, generados el 12 de noviembre de 2026. El reporte de utilización corresponde al diseño colocado (*Fully Placed*) y el de temporización al diseño enrutado (*Routed*).
 
-*Figura. Evidencia de generación de bitstream de la versión documentada por Anthony.*
+| Recurso | Utilizado | Disponible | Utilización |
+|---|---:|---:|---:|
+| LUT | 5656 | 20800 | 27.19 % |
+| Registros (FF) | 5737 | 41600 | 13.79 % |
+| Block RAM | 16 | 50 | 32.00 % |
+| DSP | 2 | 90 | 2.22 % |
 
-Para evaluar el diseño completo también deben presentarse los valores de recursos y temporización **del mismo bitstream que se declare como versión final**:
+![Figura 5. Utilización de LUT y registros](../diseno/imagenes/fig04_utilizacion_lut_ff.png)
 
-| Métrica | Resultado del diseño final |
-|---|---|
-| LUT | Pendiente de copiar desde Report Utilization |
-| FF | Pendiente de copiar desde Report Utilization |
-| BRAM | Pendiente de copiar desde Report Utilization |
-| DSP | Pendiente de copiar desde Report Utilization |
-| WNS / TNS | Pendiente de copiar desde Report Timing Summary |
-| WHS | Pendiente de copiar desde Report Timing Summary |
-| DRC | Pendiente de adjuntar el resultado final |
+*Figura 5. Utilización de LUT y registros del diseño digital.*
+
+![Figura 6. Utilización de Block RAM y DSP](../diseno/imagenes/fig05_utilizacion_bram_dsp.png)
+
+*Figura 6. Utilización de los recursos BRAM y DSP de la FPGA.*
+
+El análisis de temporización posterior al enrutamiento proporcionó los siguientes resultados:
+
+| Parámetro | Resultado |
+|---|---:|
+| Reloj principal | 100 MHz |
+| WNS | +1.172 ns |
+| TNS | 0.000 ns |
+| WHS | +0.025 ns |
+| THS | 0.000 ns |
+| Rutas con fallos de setup | 0 |
+| Rutas con fallos de hold | 0 |
+
+El reporte indica que se cumplieron las restricciones de temporización especificadas. Sin embargo, también señala tres entradas y cinco salidas sin restricciones de retardo de E/S, por lo que no se debe interpretar el resultado como una validación completa de todas las interfaces externas.
+
+![Figura 7. Resumen de temporización](../diseno/imagenes/fig07_timing_summary.png)
+
+*Figura 7. Resultados del análisis de temporización posterior al enrutamiento.*
 
 El hecho de que Vivado genere el bitstream confirma un avance de implementación, pero **no sustituye las pruebas funcionales ni permite afirmar que el control completo cierre el lazo de corriente**.
 
@@ -263,11 +298,7 @@ En una prueba de 10 000 interrupciones se registraron los siguientes valores:
 
 A 100 MHz, el rango registrado corresponde aproximadamente a **99.98–100.02 µs**. Estos resultados respaldan la base temporal en esa prueba, pero no miden por sí solos el tiempo de procesamiento del lazo completo.
 
-También se conservó una prueba histórica de la interrupción real del AXI Timer en el depurador:
-
-![Verificación de interrupción real del AXI Timer](images/05_Interrupcion_real_AXI_Timer.png)
-
-*Figura. Variables observadas en WATCH durante una prueba del AXI Timer.*
+Estos resultados se obtuvieron durante la prueba de interrupciones del AXI Timer. No se incorpora una captura de esa prueba entre las ocho evidencias gráficas disponibles.
 
 ### 5.4 Pruebas del controlador PR y del registro DUTY
 
@@ -286,7 +317,9 @@ Primero se ejecutó una prueba numérica independiente del PR. Posteriormente, e
 
 La prueba terminó sin errores registrados, procesó las muestras previstas y comprobó las operaciones de lectura y escritura sobre DUTY. El registro DEADTIME devolvió 50 ciclos, mientras que la palabra de control final mantuvo el bit de habilitación desactivado.
 
-**Figura pendiente:** captura de WATCH de esta prueba exacta con las variables de la tabla anterior, si se conserva el registro.
+![Figura 8. Resultados de la prueba PR-PWM en Vitis](../diseno/imagenes/fig06_pr_pwm_vitis.png)
+
+*Figura 8. Resultados de las 1000 iteraciones del regulador PR y la comunicación AXI4-Lite.*
 
 ### 5.5 Prueba histórica sincronizada por `pwm_trigger`
 
@@ -303,9 +336,7 @@ Además de las 1000 iteraciones numéricas anteriores, Anthony documentó una **
 
 El resultado de 40.26 µs corresponde al bloque observado mediante software durante esa prueba corta, de aproximadamente 100 ms. **No significa que se haya medido toda la latencia desde la corriente física hasta las compuertas**, ni que se haya demostrado estabilidad a largo plazo o exportación UART simultánea.
 
-![Prueba digital sincronizada PR-PWM](images/07_PR_PWM_sincronizado.png)
-
-*Figura. Variables en WATCH de la prueba PR–PWM sincronizada con referencia virtual.*
+Esta prueba sincronizada se documenta mediante los valores registrados en la tabla anterior. No se incorpora una captura adicional entre las ocho evidencias disponibles.
 
 ### 5.6 Alcance de las verificaciones de adquisición y exportación
 
@@ -321,7 +352,7 @@ La prueba del AXI Timer mostró interrupciones próximas a los 100 µs previstos
 
 Por su parte, las 1000 iteraciones del ensayo PR–DUTY de Yerlin permitieron comprobar el funcionamiento numérico del algoritmo y las operaciones AXI, sin habilitar las salidas. Estos resultados **no deben mezclarse** con la prueba sincronizada, porque tuvieron condiciones y objetivos diferentes.
 
-La síntesis, la implementación y el bitstream permiten confirmar que el diseño digital avanzó hasta una versión programable en FPGA. Aun así, queda pendiente presentar las cifras cuantitativas de recursos y timing de la versión final, así como completar la verificación de la interfaz ADC y las pruebas temporizadas postimplementación correspondientes.
+La síntesis, la implementación y el bitstream permiten confirmar que el diseño digital avanzó hasta una versión programable en FPGA. Los reportes del 12 de noviembre muestran una utilización de 27.19 % de LUT y 32.00 % de BRAM, además de márgenes positivos de setup y hold en las rutas analizadas. Aun así, se debe confirmar que estos reportes corresponden a la versión final declarada y completar la verificación de la interfaz ADC y las pruebas temporizadas postimplementación correspondientes.
 
 ## 7. Limitaciones y trabajo pendiente
 
