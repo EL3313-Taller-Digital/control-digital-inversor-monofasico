@@ -138,10 +138,10 @@ El reloj de referencia utilizado es de **100 MHz**. Las cuatro señales del PWM 
 
 *Figura 1. Block Design completo del sistema digital, con MicroBlaze V, interconexión AXI, UART, GPIO, temporizador, PWM y XADC.*
 
-
-![Figura 2. Detalle de los periféricos de control](../diseno/imagenes/fig01_perifericos_control.png)
+![Figura 2. Detalle de los periféricos de control](../diseno/imagenes/fig01_perifericos_control.png.png)
 
 *Figura 2. Detalle del Block Design donde se observan el periférico PWM AXI4-Lite, AXI Timer y XADC.*
+
 
 ### 4.2 Generador PWM personalizado
 
