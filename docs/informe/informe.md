@@ -188,33 +188,6 @@ La UART se configuró a 115200 baudios. Se utilizó para comprobar la ejecución
 
 El programa también contempla almacenar muestras y enviarlas en formato CSV mediante una solicitud desde un botón físico. **La exportación completa mediante botón durante la ejecución periódica del control no quedó confirmada** con las evidencias de este informe.
 
-### 4.7 Diagramas del funcionamiento
-
-El siguiente diagrama presenta el **flujo previsto** de la aplicación integrada. No debe interpretarse como una demostración de que la realimentación física haya sido validada:
-
-```mermaid
-flowchart TD
-    A[Inicio y configuración] --> B[Esperar evento periódico]
-    B --> C[Adquirir muestra XADC]
-    C --> D[Corregir y escalar corriente]
-    D --> E[Calcular error y PR]
-    E --> F[Escribir DUTY por AXI4-Lite]
-    F --> G[Guardar muestra]
-    G --> B
-```
-
-El siguiente esquema resume los estados funcionales observables del PWM; es una representación de su comportamiento y **no una transcripción literal de una máquina de estados RTL**:
-
-```mermaid
-stateDiagram-v2
-    [*] --> Apagado
-    Apagado --> Generando: enable = 1
-    Generando --> TiempoMuerto: cambio de conmutación
-    TiempoMuerto --> Generando: termina el intervalo
-    Generando --> Apagado: enable = 0 o reset
-    TiempoMuerto --> Apagado: enable = 0 o reset
-```
-
 ## 5. Simulaciones, pruebas y resultados
 
 ### 5.1 Simulaciones autoverificables del PWM
